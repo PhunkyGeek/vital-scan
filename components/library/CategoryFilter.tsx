@@ -1,4 +1,4 @@
-import { ChevronDown, AlertCircle } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 interface CategoryFilterProps {
   categories: string[]

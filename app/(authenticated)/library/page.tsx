@@ -8,7 +8,7 @@ import { CategoryFilter } from '@/components/library/CategoryFilter'
 import { ConditionCard } from '@/components/library/ConditionCard'
 import { ConditionDetailDialog } from '@/components/library/ConditionDetailDialog'
 import { LibraryEmptyState } from '@/components/library/LibraryEmptyState'
-import { getConditions, getConditionCategories, getGlobalConditionLibrary, type Condition } from '@/lib/data/conditions'
+import { getConditionCategories, getGlobalConditionLibrary, type Condition } from '@/lib/data/conditions'
 
 export default function LibraryPage() {
   const supabase = createClient() as SupabaseClient

@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 
 import { runScreeningAnalysis } from '@/lib/ai/screening'
 import { scanFormSchema } from '@/lib/validators'

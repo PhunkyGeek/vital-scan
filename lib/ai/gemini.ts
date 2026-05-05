@@ -1,4 +1,4 @@
-import { GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 import { geminiScreeningResponseSchema } from '@/lib/validators'
 import { geminiConfig } from '@/lib/env/server'
@@ -66,7 +66,7 @@ function extractJsonObject(payload: string) {
 
   try {
     return JSON.parse(rawJson)
-  } catch (error) {
+  } catch {
     throw new Error('Gemini returned malformed JSON output')
   }
 }

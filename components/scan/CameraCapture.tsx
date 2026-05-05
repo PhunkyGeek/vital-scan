@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, Camera, Circle, RefreshCw } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils/file'
 
+function hasCameraSupport() {
+  return (
+    typeof navigator !== 'undefined' &&
+    !!navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getUserMedia === 'function'
+  )
+}
+
 interface CameraCaptureProps {
   selectedFile: File | null
   onCapture: (file: File) => void
@@ -13,17 +21,19 @@ interface CameraCaptureProps {
 
 export function CameraCapture({ selectedFile, onCapture, onRemove }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [status, setStatus] = useState<'loading' | 'ready' | 'denied' | 'unsupported' | 'error'>('loading')
-  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [status, setStatus] = useState<'loading' | 'ready' | 'denied' | 'unsupported' | 'error'>(() =>
+    hasCameraSupport() ? 'loading' : 'unsupported'
+  )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus('unsupported')
       return
     }
 
     let mounted = true
+
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: 'environment' } })
       .then((mediaStream) => {
@@ -32,23 +42,29 @@ export function CameraCapture({ selectedFile, onCapture, onRemove }: CameraCaptu
           return
         }
 
-        setStream(mediaStream)
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream
+        if (mounted) {
+          streamRef.current = mediaStream
+          if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream
+          }
+          setStatus('ready')
         }
-        setStatus('ready')
       })
       .catch((error) => {
-        console.error(error)
-        setStatus('denied')
-        setErrorMessage('Camera access was denied. Use the upload option instead.')
+        if (mounted) {
+          console.error(error)
+          setStatus('denied')
+          setErrorMessage('Camera access was denied. Use the upload option instead.')
+        }
       })
 
     return () => {
       mounted = false
-      stream?.getTracks().forEach((track) => track.stop())
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+      }
     }
-  }, [stream])
+  }, [])
 
   const capturePhoto = async () => {
     const video = videoRef.current

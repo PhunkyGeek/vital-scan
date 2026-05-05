@@ -55,17 +55,27 @@ export async function getDashboardStats(
   const totalScans = screeningsCount.count ?? 0
   const chatSessions = chatSessionsCount.count ?? 0
 
+  type ConditionNameRow = {
+    condition_name?: string | null
+  }
   const uniqueConditions = new Set(
-    (conditionNames.data || [])
-      .map((row: any) => String(row.condition_name).trim())
+    ((conditionNames.data || []) as ConditionNameRow[])
+      .map((row) => String(row.condition_name || '').trim())
       .filter((name) => name.length > 0)
   )
 
   const conditionsLearned = uniqueConditions.size
   const historyItems = totalScans + chatSessions
 
-  const scanActivities: RecentActivityItem[] = (recentScreenings.data || []).map(
-    (row: any) => ({
+  type RecentScreeningRow = {
+    id: string
+    body_area?: string | null
+    created_at: string
+    ai_analysis_result?: { condition_name?: string | null }
+  }
+
+  const scanActivities: RecentActivityItem[] = ((recentScreenings.data || []) as RecentScreeningRow[]).map(
+    (row) => ({
       id: row.id,
       type: 'scan',
       title: row.ai_analysis_result?.condition_name
@@ -77,8 +87,15 @@ export async function getDashboardStats(
     })
   )
 
-  const chatActivities: RecentActivityItem[] = (recentChats.data || []).map(
-    (row: any) => ({
+  type ChatRow = {
+    id: string
+    title: string | null
+    message_count: number
+    last_message_at: string
+  }
+
+  const chatActivities: RecentActivityItem[] = ((recentChats.data || []) as ChatRow[]).map(
+    (row) => ({
       id: row.id,
       type: 'chat',
       title: row.title || 'Chat session',

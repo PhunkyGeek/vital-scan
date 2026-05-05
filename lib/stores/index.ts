@@ -52,7 +52,7 @@ interface ChatState {
   clearMessages: () => void
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isTyping: false,
   addMessage: (message) => set((state) => ({
@@ -72,10 +72,10 @@ interface ScanState {
     id: string | null
     imageUrl: string | null
     status: 'idle' | 'uploading' | 'analyzing' | 'complete' | 'error'
-    result: any | null
+    result: Record<string, unknown> | null
   }
   setScanStatus: (status: ScanState['currentScan']['status']) => void
-  setScanResult: (result: any) => void
+  setScanResult: (result: Record<string, unknown>) => void
   setScanImage: (imageUrl: string) => void
   resetScan: () => void
 }

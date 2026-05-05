@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createSignedImageUrl } from '@/lib/supabase/storage'
 
 export interface HistoryItem {
   id: string
@@ -8,11 +7,11 @@ export interface HistoryItem {
   created_at: string
   condition_name: string
   risk_level: string
-  age_group: string | null
-  summary?: string
-  condition_category?: string
+  age_group?: string | null
+  summary?: string | null
+  condition_category?: string | null
   confidence_score?: number
-  image_path?: string
+  image_path?: string | null
 }
 
 /**
@@ -73,12 +72,38 @@ export async function getUserScreeningHistory(
     return []
   }
 
+  type ScreeningRow = {
+    id: string
+    user_id: string
+    body_area: string
+    created_at: string
+    age_group?: string | null
+    image_path?: string | null
+    ai_analysis_result?: {
+      condition_name?: string | null
+      condition_category?: string | null
+      risk_level?: string
+      confidence?: number
+      confidence_score?: number
+      summary?: string
+    } | null
+    screening_results?: Array<{
+      id: string
+      condition_name?: string | null
+      condition_category?: string | null
+      risk_level?: string
+      confidence?: number
+      confidence_score?: number
+      summary?: string
+    }>
+  }
+
   return (
-    (data as any[])?.flatMap((row) => {
+    (data as unknown as ScreeningRow[] | null)?.flatMap((row) => {
       const items: HistoryItem[] = []
 
       if (row.screening_results && row.screening_results.length > 0) {
-        row.screening_results.forEach((result: any) => {
+        row.screening_results.forEach((result) => {
           const riskLevel = result.risk_level || 'unknown'
           if (options?.riskLevel && options.riskLevel !== 'all' && riskLevel !== options.riskLevel) {
             return

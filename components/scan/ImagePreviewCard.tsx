@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Trash2 } from 'lucide-react'
@@ -24,9 +25,11 @@ export function ImagePreviewCard({ previewUrl, file, onRemove }: ImagePreviewCar
       </CardHeader>
       <CardContent className="p-0">
         <div className="relative overflow-hidden rounded-b-3xl border-t border-muted-foreground/10">
-          <img
+          <Image
             src={previewUrl}
             alt="Selected scan preview"
+            width={1200}
+            height={720}
             className="h-72 w-full object-cover"
           />
         </div>

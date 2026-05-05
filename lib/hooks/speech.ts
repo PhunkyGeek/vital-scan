@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+type SpeechRecognitionConstructor = new () => SpeechRecognition
+
 export interface SpeechToTextState {
   isListening: boolean
   transcript: string
@@ -24,10 +26,14 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
     onError,
   } = options
 
+  const isSpeechRecognitionSupported =
+    typeof window !== 'undefined' &&
+    (('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window))
+
   const [state, setState] = useState<SpeechToTextState>({
     isListening: false,
     transcript: '',
-    isSupported: false,
+    isSupported: isSpeechRecognitionSupported,
     error: null,
   })
 
@@ -46,11 +52,16 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
 
   useEffect(() => {
     // Check for browser support
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const win = window as unknown as {
+      SpeechRecognition?: SpeechRecognitionConstructor
+      webkitSpeechRecognition?: SpeechRecognitionConstructor
+    }
 
-    if (!SpeechRecognition) {
-      setState(prev => prev.isSupported ? prev : { ...prev, isSupported: false })
+    const SpeechRecognitionConstructor =
+      win.SpeechRecognition || win.webkitSpeechRecognition
+
+    if (!SpeechRecognitionConstructor) {
+      recognitionRef.current = null
       return
     }
 
@@ -101,23 +112,22 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
 
     // Update recognition properties
     const recognition = recognitionRef.current
-    recognition.lang = language
-    recognition.continuous = continuous
-    recognition.interimResults = interimResults
-
-    // Set supported state only once
-    setState(prev => prev.isSupported ? prev : { ...prev, isSupported: true })
+    if (recognition) {
+      recognition.lang = language
+      recognition.continuous = continuous
+      recognition.interimResults = interimResults
+    }
 
     return () => {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop()
-        } catch (error) {
+        } catch {
           // Ignore errors during cleanup
         }
       }
     }
-  }, []) // Empty dependency array - only run once on mount
+  }, [language, continuous, interimResults])
 
   // Update recognition properties when options change
   useEffect(() => {
@@ -134,7 +144,7 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
     try {
       setState(prev => ({ ...prev, error: null }))
       recognitionRef.current.start()
-    } catch (error) {
+    } catch {
       const errorMessage = 'Failed to start speech recognition'
       setState(prev => ({ ...prev, error: errorMessage }))
       if (onErrorRef.current) {
@@ -147,7 +157,7 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop()
-      } catch (error) {
+      } catch {
         // Ignore errors when stopping
       }
     }
@@ -165,9 +175,18 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}) {
   }
 }
 
+export interface SpeechSpeakOptions {
+  lang?: string
+  rate?: number
+  pitch?: number
+  volume?: number
+  voice?: SpeechSynthesisVoice | null
+}
+
 export interface TextToSpeechState {
   isSpeaking: boolean
   isSupported: boolean
+  currentText: string
   error: string | null
 }
 
@@ -194,11 +213,12 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
     onError,
   } = options
 
-  const [state, setState] = useState<TextToSpeechState>({
+  const [state, setState] = useState<TextToSpeechState>(() => ({
     isSpeaking: false,
-    isSupported: false,
+    isSupported: typeof window !== 'undefined' && 'speechSynthesis' in window,
+    currentText: '',
     error: null,
-  })
+  }))
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const onStartRef = useRef(onStart)
@@ -220,11 +240,8 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
-      setState(prev => prev.isSupported ? prev : { ...prev, isSupported: false })
       return
     }
-
-    setState(prev => prev.isSupported ? prev : { ...prev, isSupported: true })
 
     return () => {
       window.speechSynthesis.cancel()
@@ -232,54 +249,57 @@ export function useTextToSpeech(options: UseTextToSpeechOptions = {}) {
   }, [])
 
   const speak = useCallback(
-    (text: string) => {
+    (text: string, options?: SpeechSpeakOptions) => {
       if (!('speechSynthesis' in window) || !text.trim()) return
 
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel()
+      const synth = window.speechSynthesis
+      synth.cancel()
 
       const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = language
-      utterance.rate = rate
-      utterance.pitch = pitch
-      utterance.volume = volume
+      utterance.lang = options?.lang ?? language
+      utterance.rate = options?.rate ?? rate
+      utterance.pitch = options?.pitch ?? pitch
+      utterance.volume = options?.volume ?? volume
 
-      if (voice) {
-        utterance.voice = voice
+      if (options?.voice ?? voice) {
+        utterance.voice = options?.voice ?? voice
       }
 
       utterance.onstart = () => {
-        setState(prev => ({ ...prev, isSpeaking: true, error: null }))
+        setState(prev => ({ ...prev, isSpeaking: true, currentText: text, error: null }))
         if (onStartRef.current) onStartRef.current()
       }
 
       utterance.onend = () => {
-        setState(prev => ({ ...prev, isSpeaking: false }))
+        setState(prev => ({ ...prev, isSpeaking: false, currentText: '' }))
         if (onEndRef.current) onEndRef.current()
       }
 
       utterance.onerror = (event) => {
         const errorMessage = `Speech synthesis error: ${event.error}`
-        setState(prev => ({ ...prev, isSpeaking: false, error: errorMessage }))
+        setState(prev => ({ ...prev, isSpeaking: false, currentText: '', error: errorMessage }))
         if (onErrorRef.current) onErrorRef.current(errorMessage)
       }
 
       utteranceRef.current = utterance
-      window.speechSynthesis.speak(utterance)
+      synth.speak(utterance)
     },
     [language, rate, pitch, volume, voice]
   )
 
   const stop = useCallback(() => {
+    if (!('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
-    setState(prev => ({ ...prev, isSpeaking: false }))
+    setState(prev => ({ ...prev, isSpeaking: false, currentText: '' }))
   }, [])
 
   const pause = useCallback(() => {
+    if (!('speechSynthesis' in window)) return
     window.speechSynthesis.pause()
   }, [])
 
   const resume = useCallback(() => {
+    if (!('speechSynthesis' in window)) return
     window.speechSynthesis.resume()
   }, [])
 

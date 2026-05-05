@@ -53,12 +53,18 @@ export default function ClientPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Get voice preferences
-  const voiceEnabled = (profile?.preferences as any)?.chat?.voiceEnabled ?? false
-  const preferredLanguage = (profile?.preferences as any)?.language?.preferredLanguage ?? 'en'
+  const chatPrefs = profile?.preferences?.chat as Record<string, unknown> | undefined
+  const languagePrefs = profile?.preferences?.language as Record<string, unknown> | undefined
+  const voiceEnabled = (chatPrefs?.voiceEnabled as boolean) ?? false
+  const preferredLanguage = (languagePrefs?.preferredLanguage as string) ?? 'en-US'
+  const effectiveLanguage =
+    preferredLanguage === 'auto'
+      ? (typeof navigator !== 'undefined' ? navigator.language : 'en-US')
+      : preferredLanguage || 'en-US'
 
   // Speech recognition hook
   const speechToText = useSpeechToText({
-    language: preferredLanguage === 'auto' ? navigator.language : `${preferredLanguage}-US`,
+    language: effectiveLanguage,
     onResult: (transcript, isFinal) => {
       if (isFinal) {
         setInput(transcript)
@@ -72,7 +78,7 @@ export default function ClientPage() {
 
   // Text-to-speech hook
   const textToSpeech = useTextToSpeech({
-    language: preferredLanguage === 'auto' ? navigator.language : `${preferredLanguage}-US`,
+    language: effectiveLanguage,
   })
 
   useEffect(() => {
@@ -82,7 +88,7 @@ export default function ClientPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push("/login")
+        router.push('/login')
         return
       }
 
@@ -93,12 +99,12 @@ export default function ClientPage() {
         const userProfile = await getUserProfile(supabase, user.id)
         setProfile(userProfile)
       } catch (err) {
-        console.error("Failed to load profile:", err)
+        console.error('Failed to load profile:', err)
       }
     }
 
     void loadUser()
-  }, [supabase.auth, router])
+  }, [supabase, router])
 
   const loadSessions = useCallback(async () => {
     if (!userId) return
@@ -625,7 +631,7 @@ export default function ClientPage() {
           <div className="bg-background rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold mb-2">Delete this chat?</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              This will permanently remove the conversation "{sessionToDelete.title}" from your history.
+              This will permanently remove the conversation &quot;{sessionToDelete.title}&quot; from your history.
             </p>
             <div className="flex gap-3 justify-end">
               <Button

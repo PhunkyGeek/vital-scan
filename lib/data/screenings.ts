@@ -83,7 +83,7 @@ export async function getScreeningWithResult(
   }
 
   // Then fetch the screening_results separately
-  const { data: screeningResultsData, error: screeningResultsError } = await supabase
+  const { data: screeningResultsData } = await supabase
     .from('screening_results')
     .select(`
       id,

@@ -24,64 +24,68 @@ export function ProfileForm({
   isLoading,
   onSubmit,
 }: ProfileFormProps) {
-  const [fullName, setFullName] = useState(profile?.full_name || '')
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
-  const [dateOfBirth, setDateOfBirth] = useState(profile?.date_of_birth || '')
-  const [gender, setGender] = useState(profile?.gender || '')
-  const [medicalHistory, setMedicalHistory] = useState(
-    (profile?.medical_history || [])?.join(', ') || ''
-  )
-  const [allergies, setAllergies] = useState(
-    (profile?.allergies || [])?.join(', ') || ''
-  )
-  const [emergencyContact, setEmergencyContact] = useState(
-    profile?.emergency_contact || ''
-  )
-  const [emergencyPhone, setEmergencyPhone] = useState(
-    profile?.emergency_phone || ''
-  )
+  const [formState, setFormState] = useState({
+    fullName: profile?.full_name || '',
+    avatarUrl: profile?.avatar_url || '',
+    dateOfBirth: profile?.date_of_birth || '',
+    gender: profile?.gender || '',
+    medicalHistory: (profile?.medical_history || []).join(', '),
+    allergies: (profile?.allergies || []).join(', '),
+    emergencyContact: profile?.emergency_contact || '',
+    emergencyPhone: profile?.emergency_phone || '',
+  })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
     'idle'
   )
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
-    setFullName(profile?.full_name || '')
-    setAvatarUrl(profile?.avatar_url || '')
-    setDateOfBirth(profile?.date_of_birth || '')
-    setGender(profile?.gender || '')
-    setMedicalHistory((profile?.medical_history || []).join(', '))
-    setAllergies((profile?.allergies || []).join(', '))
-    setEmergencyContact(profile?.emergency_contact || '')
-    setEmergencyPhone(profile?.emergency_phone || '')
-    setStatus('idle')
-  }, [profile?.id, profile?.updated_at])
+    const newFormState = {
+      fullName: profile?.full_name || '',
+      avatarUrl: profile?.avatar_url || '',
+      dateOfBirth: profile?.date_of_birth || '',
+      gender: profile?.gender || '',
+      medicalHistory: (profile?.medical_history || []).join(', '),
+      allergies: (profile?.allergies || []).join(', '),
+      emergencyContact: profile?.emergency_contact || '',
+      emergencyPhone: profile?.emergency_phone || '',
+    }
+
+    if (JSON.stringify(newFormState) !== JSON.stringify(formState)) {
+      const timeoutId = window.setTimeout(() => {
+        setFormState(newFormState)
+        setStatus('idle')
+      }, 0)
+
+      return () => window.clearTimeout(timeoutId)
+    }
+  }, [profile, formState])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('loading')
     setErrorMessage('')
 
-    const medicalHistoryArray = medicalHistory
+    const medicalHistoryArray = formState.medicalHistory
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean)
 
-    const allergiesArray = allergies
+    const allergiesArray = formState.allergies
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean)
 
     try {
       await onSubmit({
-        full_name: fullName || null,
-        avatar_url: avatarUrl || null,
-        date_of_birth: dateOfBirth || null,
-        gender: gender || null,
+        full_name: formState.fullName || null,
+        avatar_url: formState.avatarUrl || null,
+        date_of_birth: formState.dateOfBirth || null,
+        gender: formState.gender || null,
         medical_history: medicalHistoryArray.length > 0 ? medicalHistoryArray : null,
         allergies: allergiesArray.length > 0 ? allergiesArray : null,
-        emergency_contact: emergencyContact || null,
-        emergency_phone: emergencyPhone || null,
+        emergency_contact: formState.emergencyContact || null,
+        emergency_phone: formState.emergencyPhone || null,
       })
       setStatus('success')
       setTimeout(() => setStatus('idle'), 3000)
@@ -117,8 +121,8 @@ export function ProfileForm({
         <input
           id="fullName"
           type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          value={formState.fullName}
+          onChange={(e) => setFormState((current) => ({ ...current, fullName: e.target.value }))}
           placeholder="Your full name"
           className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
@@ -131,8 +135,8 @@ export function ProfileForm({
         <input
           id="avatarUrl"
           type="url"
-          value={avatarUrl}
-          onChange={(e) => setAvatarUrl(e.target.value)}
+          value={formState.avatarUrl}
+          onChange={(e) => setFormState((current) => ({ ...current, avatarUrl: e.target.value }))}
           placeholder="https://example.com/avatar.jpg"
           className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
         />
@@ -146,8 +150,8 @@ export function ProfileForm({
           <input
             id="dateOfBirth"
             type="date"
-            value={dateOfBirth || ''}
-            onChange={(e) => setDateOfBirth(e.target.value)}
+            value={formState.dateOfBirth || ''}
+            onChange={(e) => setFormState((current) => ({ ...current, dateOfBirth: e.target.value }))}
             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
@@ -158,8 +162,8 @@ export function ProfileForm({
           </label>
           <select
             id="gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
+            value={formState.gender}
+            onChange={(e) => setFormState((current) => ({ ...current, gender: e.target.value }))}
             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           >
             <option value="">Select gender...</option>
@@ -177,8 +181,8 @@ export function ProfileForm({
         </label>
         <textarea
           id="medicalHistory"
-          value={medicalHistory}
-          onChange={(e) => setMedicalHistory(e.target.value)}
+          value={formState.medicalHistory}
+          onChange={(e) => setFormState((current) => ({ ...current, medicalHistory: e.target.value }))}
           placeholder="Enter past diagnoses, conditions, or treatments separated by commas"
           rows={4}
           className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -191,8 +195,8 @@ export function ProfileForm({
         </label>
         <textarea
           id="allergies"
-          value={allergies}
-          onChange={(e) => setAllergies(e.target.value)}
+          value={formState.allergies}
+          onChange={(e) => setFormState((current) => ({ ...current, allergies: e.target.value }))}
           placeholder="Enter allergies separated by commas"
           rows={3}
           className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -207,8 +211,8 @@ export function ProfileForm({
           <input
             id="emergencyContact"
             type="text"
-            value={emergencyContact}
-            onChange={(e) => setEmergencyContact(e.target.value)}
+            value={formState.emergencyContact}
+            onChange={(e) => setFormState((current) => ({ ...current, emergencyContact: e.target.value }))}
             placeholder="Name of emergency contact"
             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
@@ -220,8 +224,8 @@ export function ProfileForm({
           <input
             id="emergencyPhone"
             type="tel"
-            value={emergencyPhone}
-            onChange={(e) => setEmergencyPhone(e.target.value)}
+            value={formState.emergencyPhone}
+            onChange={(e) => setFormState((current) => ({ ...current, emergencyPhone: e.target.value }))}
             placeholder="+1234567890"
             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />

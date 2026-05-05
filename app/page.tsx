@@ -88,8 +88,8 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-semibold mb-4">Important Medical Disclaimer</h2>
             <p className="text-muted-foreground">
-              Vital Scan provides AI-assisted screening and educational information only.
-              This is not a substitute for professional medical advice, diagnosis, or treatment.
+              Vital Scan provides AI-assisted screening and informative content for quick self-care solutions only. 
+              This is not a substitute for a professional, endeavour to seek further medical advice, diagnosis, or treatment. 
               Always consult with qualified healthcare providers for medical concerns.
             </p>
           </div>

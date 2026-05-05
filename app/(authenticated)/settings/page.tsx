@@ -6,14 +6,12 @@ import { createClient } from '@/lib/supabase/client'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SettingsSectionCard } from '@/components/settings/SettingsSectionCard'
 import { ProfileForm } from '@/components/settings/ProfileForm'
-import { PrivacyInfoCard } from '@/components/settings/PrivacyInfoCard'
 import { AccountActionsCard } from '@/components/settings/AccountActionsCard'
 import {
   getUserProfile,
   createUserProfile,
   updateUserProfile,
   updateUserPreferences,
-  getPreference,
   setPreference,
   type UserProfile,
 } from '@/lib/data/profile'

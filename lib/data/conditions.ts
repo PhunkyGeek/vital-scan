@@ -173,7 +173,7 @@ export async function getConditionCategories(
     return []
   }
 
-  const categories = [...new Set((resultsData as any[])?.map((item) => item.condition_category) || [])]
+  const categories = [...new Set((resultsData as Array<{ condition_category?: string | null }> || []).map((item) => item.condition_category || ''))]
   return categories.filter(Boolean).sort()
 }
 
@@ -209,7 +209,7 @@ export async function getGlobalConditionLibrary(
 
   query = query.order('name', { ascending: true })
 
-  const { data, error } = await query
+  const { data } = await query
 
   // If conditions table has data, return it
   if (data && data.length > 0) {
@@ -242,14 +242,25 @@ export async function getGlobalConditionLibrary(
   }
 
   // Group by condition name and category, keeping latest result and counts
+  type ScreeningResultRow = {
+    condition_name?: string | null
+    condition_category?: string | null
+    risk_level?: string | null
+    summary?: string | null
+    possible_signs?: string[] | null
+    red_flags?: string[] | null
+    self_care?: string[] | null
+    created_at?: string | null
+  }
+
   const conditionMap = new Map<string, {
-    result: any
+    result: ScreeningResultRow
     scan_count: number
     latest_created_at: string
   }>()
 
   if (resultsData) {
-    (resultsData as any[]).forEach((result) => {
+    (resultsData as ScreeningResultRow[]).forEach((result) => {
       const key = `${result.condition_name || 'unknown'}|${result.condition_category || 'General'}`
       const existing = conditionMap.get(key)
       const createdAt = result.created_at || new Date().toISOString()
@@ -295,8 +306,8 @@ export async function getGlobalConditionLibrary(
     })
     .map((cond) => ({
       id: `derived-${cond.condition_name}`,
-      slug: cond.condition_name?.toLowerCase().replace(/\s+/g, '-'),
-      name: cond.condition_name,
+      slug: (cond.condition_name?.toLowerCase().replace(/\s+/g, '-') ?? 'unknown') as string,
+      name: (cond.condition_name ?? 'Condition') as string,
       category: cond.condition_category || 'General',
       description: cond.summary || 'Condition detected in health screenings',
       overview: cond.summary || '',
@@ -313,7 +324,7 @@ export async function getGlobalConditionLibrary(
       is_active: true,
       scan_count: cond.scan_count,
       latest_created_at: cond.latest_created_at,
-      created_at: cond.created_at,
+      created_at: (cond.created_at ?? new Date().toISOString()) as string,
     }))
     .slice(0, options?.limit || 100)
 

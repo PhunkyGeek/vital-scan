@@ -20,13 +20,14 @@ interface UseTextToSpeechReturn {
  *   <button onClick={() => speak("Hello world")}>Speak</button>
  */
 export function useTextToSpeech(lang = 'en-US'): UseTextToSpeechReturn {
-  const [isSupported, setIsSupported] = useState(false)
+  const [isSupported] = useState<boolean>(() =>
+    typeof window !== 'undefined' && 'speechSynthesis' in window
+  )
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
 
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
-  // Initialize speech synthesis on mount
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
@@ -34,10 +35,7 @@ export function useTextToSpeech(lang = 'en-US'): UseTextToSpeechReturn {
 
     const synth = window.speechSynthesis
 
-    setIsSupported(!!synth)
-
     return () => {
-      // Cleanup: stop any ongoing speech
       if (synth) {
         synth.cancel()
       }

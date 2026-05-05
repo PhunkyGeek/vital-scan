@@ -28,7 +28,7 @@ export interface Database {
           allergies: string[] | null;
           emergency_contact: string | null;
           emergency_phone: string | null;
-          preferences: Record<string, any> | null;
+          preferences: Record<string, unknown> | null;
         };
         Insert: {
           id: string;
@@ -43,7 +43,7 @@ export interface Database {
           allergies?: string[] | null;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
-          preferences?: Record<string, any> | null;
+          preferences?: Record<string, unknown> | null;
         };
         Update: {
           id?: string;
@@ -58,7 +58,7 @@ export interface Database {
           allergies?: string[] | null;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
-          preferences?: Record<string, any> | null;
+          preferences?: Record<string, unknown> | null;
         };
       };
       screenings: {
@@ -73,7 +73,7 @@ export interface Database {
           symptoms: string[] | null;
           notes: string | null;
           ai_analysis_status: 'pending' | 'processing' | 'completed' | 'failed';
-          ai_analysis_result: Record<string, any> | null;
+          ai_analysis_result: Record<string, unknown> | null;
           risk_level: RiskLevel | null;
           recommendations: string[] | null;
           follow_up_required: boolean;
@@ -92,7 +92,7 @@ export interface Database {
           symptoms?: string[] | null;
           notes?: string | null;
           ai_analysis_status?: 'pending' | 'processing' | 'completed' | 'failed';
-          ai_analysis_result?: Record<string, any> | null;
+          ai_analysis_result?: Record<string, unknown> | null;
           risk_level?: RiskLevel | null;
           recommendations?: string[] | null;
           follow_up_required?: boolean;
@@ -111,7 +111,7 @@ export interface Database {
           symptoms?: string[] | null;
           notes?: string | null;
           ai_analysis_status?: 'pending' | 'processing' | 'completed' | 'failed';
-          ai_analysis_result?: Record<string, any> | null;
+          ai_analysis_result?: Record<string, unknown> | null;
           risk_level?: RiskLevel | null;
           recommendations?: string[] | null;
           follow_up_required?: boolean;
@@ -128,10 +128,10 @@ export interface Database {
           screening_id: string;
           condition_id: string;
           confidence_score: number;
-          detected_areas: Record<string, any>;
+          detected_areas: Record<string, unknown>;
           severity_level: RiskLevel;
           ai_model_version: string;
-          raw_ai_response: Record<string, any>;
+          raw_ai_response: Record<string, unknown>;
         };
         Insert: {
           id?: string;
@@ -140,10 +140,10 @@ export interface Database {
           screening_id: string;
           condition_id: string;
           confidence_score: number;
-          detected_areas?: Record<string, any>;
+          detected_areas?: Record<string, unknown>;
           severity_level: RiskLevel;
           ai_model_version: string;
-          raw_ai_response: Record<string, any>;
+          raw_ai_response: Record<string, unknown>;
         };
         Update: {
           id?: string;
@@ -152,10 +152,10 @@ export interface Database {
           screening_id?: string;
           condition_id?: string;
           confidence_score?: number;
-          detected_areas?: Record<string, any>;
+          detected_areas?: Record<string, unknown>;
           severity_level?: RiskLevel;
           ai_model_version?: string;
-          raw_ai_response?: Record<string, any>;
+          raw_ai_response?: Record<string, unknown>;
         };
       };
       conditions: {
@@ -171,7 +171,7 @@ export interface Database {
           common_body_areas: BodyArea[];
           emergency_indicators: string[];
           treatment_urgency: TreatmentUrgency;
-          educational_content: Record<string, any>;
+          educational_content: Record<string, unknown>;
           is_active: boolean;
         };
         Insert: {
@@ -186,7 +186,7 @@ export interface Database {
           common_body_areas?: BodyArea[];
           emergency_indicators?: string[];
           treatment_urgency: TreatmentUrgency;
-          educational_content?: Record<string, any>;
+          educational_content?: Record<string, unknown>;
           is_active?: boolean;
         };
         Update: {
@@ -201,7 +201,7 @@ export interface Database {
           common_body_areas?: BodyArea[];
           emergency_indicators?: string[];
           treatment_urgency?: TreatmentUrgency;
-          educational_content?: Record<string, any>;
+          educational_content?: Record<string, unknown>;
           is_active?: boolean;
         };
       };
@@ -248,7 +248,7 @@ export interface Database {
           session_id: string;
           role: ChatRole;
           content: string;
-          metadata: Record<string, any> | null;
+          metadata: Record<string, unknown> | null;
           token_count: number | null;
         };
         Insert: {
@@ -258,7 +258,7 @@ export interface Database {
           session_id: string;
           role: ChatRole;
           content: string;
-          metadata?: Record<string, any> | null;
+          metadata?: Record<string, unknown> | null;
           token_count?: number | null;
         };
         Update: {
@@ -268,7 +268,7 @@ export interface Database {
           session_id?: string;
           role?: ChatRole;
           content?: string;
-          metadata?: Record<string, any> | null;
+          metadata?: Record<string, unknown> | null;
           token_count?: number | null;
         };
       };
@@ -333,7 +333,7 @@ export type ChatMessage = Database['public']['Tables']['chat_messages']['Row'] &
 export interface AuthUser {
   id: string;
   email: string;
-  user_metadata?: Record<string, any>;
+  user_metadata?: Record<string, unknown>;
 }
 
 export interface AuthSession {
@@ -371,7 +371,7 @@ export interface ChatRequest {
   sessionId?: string;
   message: string;
   screeningId?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface ChatResponse {
@@ -444,7 +444,7 @@ export interface ProfileFormData {
   allergies: string[];
   emergencyContact: string;
   emergencyPhone: string;
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
 }
 
 export interface ScreeningFormData {
@@ -467,7 +467,7 @@ export interface StatCardProps {
   title: string;
   value: string | number;
   description?: string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<unknown>;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
 }
@@ -500,7 +500,7 @@ export interface AuthStore {
   profile: UserProfile | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<void>;
+  signUp: (email: string, password: string, metadata?: Record<string, unknown>) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -541,7 +541,7 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<T, Exclu
 }[Keys];
 
 // API Response wrapper
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;

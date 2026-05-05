@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type SpeechRecognitionAPI = typeof window.SpeechRecognition
+type SpeechRecognitionCtor = new () => SpeechRecognition
 
 interface UseSpeechRecognitionReturn {
   isSupported: boolean
@@ -20,13 +20,16 @@ interface UseSpeechRecognitionReturn {
  *   const { isSupported, isListening, transcript, startListening, stopListening } = useSpeechRecognition()
  */
 export function useSpeechRecognition(language = 'en-US'): UseSpeechRecognitionReturn {
-  const [isSupported, setIsSupported] = useState(false)
+  const isBrowserSpeechRecognitionSupported =
+    typeof window !== 'undefined' &&
+    (('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window))
+
+  const isSupported = isBrowserSpeechRecognitionSupported
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const recognitionRef = useRef<InstanceType<SpeechRecognitionAPI> | null>(null)
-  const interimTranscriptRef = useRef('')
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   // Initialize speech recognition on mount
   useEffect(() => {
@@ -34,18 +37,20 @@ export function useSpeechRecognition(language = 'en-US'): UseSpeechRecognitionRe
       return
     }
 
-    // Check browser support
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      // Check browser support
+    const win = window as unknown as {
+      SpeechRecognition?: SpeechRecognitionCtor
+      webkitSpeechRecognition?: SpeechRecognitionCtor
+    }
 
-    if (!SpeechRecognition) {
-      setIsSupported(false)
+    const SpeechRecognitionConstructor =
+      win.SpeechRecognition || win.webkitSpeechRecognition
+
+    if (!SpeechRecognitionConstructor) {
       return
     }
 
-    setIsSupported(true)
-
-    const recognition = new SpeechRecognition()
+    const recognition = new SpeechRecognitionConstructor()
     recognitionRef.current = recognition
 
     // Configure recognition
@@ -55,17 +60,20 @@ export function useSpeechRecognition(language = 'en-US'): UseSpeechRecognitionRe
 
     // Handle results
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      interimTranscriptRef.current = ''
+      let interimTranscriptLocal = ''
+      let finalTranscript = ''
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
+        const transcriptChunk = event.results[i][0].transcript
 
         if (event.results[i].isFinal) {
-          setTranscript((prev) => prev + transcript + ' ')
+          finalTranscript += transcriptChunk + ' '
         } else {
-          interimTranscriptRef.current += transcript
+          interimTranscriptLocal += transcriptChunk
         }
       }
+
+      setTranscript((prev) => `${prev}${finalTranscript}${interimTranscriptLocal}`)
     }
 
     // Handle errors
@@ -97,11 +105,10 @@ export function useSpeechRecognition(language = 'en-US'): UseSpeechRecognitionRe
     }
 
     setError(null)
-    interimTranscriptRef.current = ''
 
     try {
       recognitionRef.current.start()
-    } catch (err) {
+    } catch {
       // Already started, ignore
     }
   }, [isSupported])
@@ -113,21 +120,20 @@ export function useSpeechRecognition(language = 'en-US'): UseSpeechRecognitionRe
 
     try {
       recognitionRef.current.stop()
-    } catch (err) {
+    } catch {
       // Not started, ignore
     }
   }, [])
 
   const resetTranscript = useCallback(() => {
     setTranscript('')
-    interimTranscriptRef.current = ''
     setError(null)
   }, [])
 
   return {
     isSupported,
     isListening,
-    transcript: transcript + interimTranscriptRef.current,
+    transcript,
     error,
     startListening,
     stopListening,

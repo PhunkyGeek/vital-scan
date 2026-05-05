@@ -131,10 +131,10 @@ async function handleSimpleChat(body: SimpleChatRequest): Promise<NextResponse> 
   }
 }
 
-async function handleComplexChat(body: any): Promise<NextResponse> {
+async function handleComplexChat(body: unknown): Promise<NextResponse> {
   try {
     // Validate input
-    const validation = chatRequestSchema.safeParse(body)
+    const validation = chatRequestSchema.safeParse(body as Record<string, unknown>)
     if (!validation.success) {
       return NextResponse.json(
         {

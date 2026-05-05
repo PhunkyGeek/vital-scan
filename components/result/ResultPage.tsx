@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { AppHeader } from '@/components/shared/AppHeader'
 import { DisclaimerBanner } from '@/components/shared/DisclaimerBanner'
 import { ReportMeta } from '@/components/result/ReportMeta'
 import { ScanImagePreview } from '@/components/result/ScanImagePreview'
@@ -17,15 +16,25 @@ import { Volume2, VolumeX } from 'lucide-react'
 import { useTextToSpeech } from '@/lib/hooks/speech'
 import { createClient } from '@/lib/supabase/client'
 import type { ScreeningWithResult } from '@/lib/data/screenings'
-import type { Profile } from '@/lib/data/profile'
+import type { UserProfile } from '@/lib/data/profile'
 
 interface ResultPageProps {
   screening: ScreeningWithResult
 }
 
 export function ResultPage({ screening }: ResultPageProps) {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const textToSpeech = useTextToSpeech()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const languagePrefs = profile?.preferences?.language as Record<string, unknown> | undefined
+  const chatPrefs = profile?.preferences?.chat as Record<string, unknown> | undefined
+  const preferredLanguage = (languagePrefs?.preferredLanguage as string) ?? 'en-US'
+  const effectiveLanguage =
+    preferredLanguage === 'auto'
+      ? (typeof window !== 'undefined' ? navigator.language : 'en-US')
+      : preferredLanguage || 'en-US'
+
+  const textToSpeech = useTextToSpeech({
+    language: effectiveLanguage,
+  })
 
   const aiResult = screening.ai_analysis_result
   const isUrgent = screening.risk_level === 'urgent' ||
@@ -48,59 +57,57 @@ export function ResultPage({ screening }: ResultPageProps) {
     void loadProfile()
   }, [])
 
-  const voiceEnabled = profile?.preferences?.chat?.voiceEnabled ?? false
-  const preferredLanguage = profile?.preferences?.language?.preferredLanguage ?? 'en-US'
+  const voiceEnabled = (chatPrefs?.voiceEnabled as boolean) ?? false
 
   const generateResultText = () => {
-    const parts = []
+    const parts: string[] = []
 
-    // Summary
-    if (aiResult?.summary) {
-      parts.push(`Summary: ${aiResult.summary}`)
+    const conditionName = aiResult?.condition_name || screening.condition?.name || 'Screening result'
+    if (conditionName) {
+      parts.push(`Screening result: ${conditionName}`)
     }
 
-    // Condition
-    if (screening.condition?.name) {
-      parts.push(`Condition: ${screening.condition.name}`)
-    }
-
-    // Risk level
     if (screening.risk_level) {
       parts.push(`Risk level: ${screening.risk_level}`)
     }
 
-    // Possible signs
-    if (aiResult?.possible_signs?.length) {
-      parts.push(`Possible signs: ${aiResult.possible_signs.join(', ')}`)
+    if (typeof screening.result?.confidence_score === 'number') {
+      parts.push(`Confidence: ${Math.round(screening.result.confidence_score * 100)} percent`)
     }
 
-    // Red flags
-    if (aiResult?.red_flags?.length) {
-      parts.push(`Red flags: ${aiResult.red_flags.join(', ')}`)
+    if (aiResult?.summary) {
+      parts.push(aiResult.summary)
     }
 
-    // Self care
+    if (aiResult?.recommended_action) {
+      parts.push(`Recommended action: ${aiResult.recommended_action}`)
+    }
+
     if (aiResult?.self_care?.length) {
-      parts.push(`Self care recommendations: ${aiResult.self_care.join(', ')}`)
+      parts.push(`Self-care suggestions: ${aiResult.self_care.join(', ')}`)
     }
 
-    // Recommended actions
-    if (aiResult?.recommended_actions?.length) {
-      parts.push(`Recommended actions: ${aiResult.recommended_actions.join(', ')}`)
+    if (aiResult?.red_flags?.length) {
+      parts.push(`Red flags to watch for: ${aiResult.red_flags.join(', ')}`)
     }
 
-    return parts.join('. ')
+    return parts.filter(Boolean).join('. ')
   }
 
   const handleReadResultAloud = () => {
     const resultText = generateResultText()
-    if (resultText) {
-      textToSpeech.speak(resultText, {
-        lang: preferredLanguage,
-        rate: 0.9,
-        pitch: 1,
-      })
+    if (!resultText) return
+
+    if (textToSpeech.isSpeaking) {
+      textToSpeech.stop()
+      return
     }
+
+    textToSpeech.speak(resultText, {
+      lang: effectiveLanguage,
+      rate: 0.95,
+      pitch: 1,
+    })
   }
 
   return (
@@ -116,7 +123,7 @@ export function ResultPage({ screening }: ResultPageProps) {
                 onClick={handleReadResultAloud}
                 variant="outline"
                 className="flex items-center gap-2"
-                disabled={textToSpeech.isSpeaking}
+                aria-label={textToSpeech.isSpeaking ? 'Stop reading result aloud' : 'Read result aloud'}
               >
                 {textToSpeech.isSpeaking ? (
                   <VolumeX className="h-4 w-4" />

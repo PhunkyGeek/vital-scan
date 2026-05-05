@@ -43,7 +43,7 @@ export function VoiceSettings({
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          When enabled, the chatbot can read responses aloud using your device's speaker.
+          When enabled, the chatbot can read responses aloud using your device’s speaker.
         </p>
       </div>
     </div>

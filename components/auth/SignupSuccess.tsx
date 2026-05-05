@@ -18,7 +18,7 @@ export function SignupSuccess({ email, onBackToLogin }: SignupSuccessProps) {
         </div>
         <CardTitle className="text-2xl">Check Your Email</CardTitle>
         <CardDescription>
-          We've sent a confirmation link to <strong>{email}</strong>
+          We have sent a confirmation link to <strong>{email}</strong>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-center">
@@ -26,7 +26,7 @@ export function SignupSuccess({ email, onBackToLogin }: SignupSuccessProps) {
           Click the link in the email to activate your account and start using Vital Scan.
         </p>
         <p className="text-sm text-muted-foreground">
-          Didn't receive the email? Check your spam folder or try signing up again.
+          Didn&apos;t receive the email? Check your spam folder or try signing up again.
         </p>
         <Button onClick={onBackToLogin} variant="outline" className="w-full">
           Back to Sign In

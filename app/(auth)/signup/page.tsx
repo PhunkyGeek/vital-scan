@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState, useEffect, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -83,7 +83,25 @@ export default function SignupPage() {
     setShowSuccess(true)
   }
 
-  const isSubmitDisabled = Boolean(isLoading || (lastAttempt && Date.now() - lastAttempt < cooldownPeriod))
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
+
+  useEffect(() => {
+    if (!lastAttempt) {
+      return
+    }
+
+    const updateRemaining = () => {
+      const remaining = cooldownPeriod - (Date.now() - lastAttempt)
+      setCooldownRemaining(Math.max(0, remaining))
+    }
+
+    updateRemaining()
+    const intervalId = window.setInterval(updateRemaining, 500)
+
+    return () => window.clearInterval(intervalId)
+  }, [lastAttempt, cooldownPeriod])
+
+  const isSubmitDisabled = isLoading || cooldownRemaining > 0
 
   if (showSuccess) {
     return (

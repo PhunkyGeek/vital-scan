@@ -30,7 +30,9 @@ export function validateHistoryMessages(messages: unknown[]): SimpleChatMessage[
       if (typeof msg !== 'object' || msg === null) return false
       if (!('role' in msg) || !('content' in msg)) return false
 
-      const { role, content } = msg as any
+      const candidate = msg as { role?: unknown; content?: unknown }
+      const role = candidate.role
+      const content = candidate.content
 
       // Validate role
       if (role !== 'user' && role !== 'assistant') {

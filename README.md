@@ -4,6 +4,8 @@
 
 Vital Scan is a modern, production-ready web application that uses artificial intelligence to help users screen visible health conditions through image analysis. Built with Next.js, TypeScript, and Supabase, it provides a safe, educational platform for preliminary health assessments.
 
+Visit [https://vital-scan-smoky.vercel.app/](https://vital-scan-smoky.vercel.app/)
+
 ![Vital Scan](https://img.shields.io/badge/Status-Production--Ready-green)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.2-black)

@@ -54,11 +54,21 @@ export default function SignupPage() {
     setLastAttempt(Date.now())
     const supabase = createClient()
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    const emailRedirectTo = appUrl ? `${appUrl.replace(/\/$/, '')}/auth/callback` : undefined
+
+    if (!emailRedirectTo) {
+      setError('Missing app URL configuration for email confirmation.')
+      setIsLoading(false)
+      return
+    }
+
     // Sign up with full_name in metadata - trigger will handle profile creation
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo,
         data: {
           full_name: name.trim(),
         },

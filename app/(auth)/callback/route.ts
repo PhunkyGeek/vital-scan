@@ -1,15 +1,26 @@
 import { redirect } from 'next/navigation'
+import type { EmailOtpType } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+
+const allowedEmailOtpTypes: EmailOtpType[] = [
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+]
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const code = url.searchParams.get('code')
-  const tokenHash = url.searchParams.get('token_hash')
-  const type = url.searchParams.get('type') ?? undefined
+  const searchParams = url.searchParams
+  const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash') ?? searchParams.get('token')
+  const typeParam = searchParams.get('type') ?? undefined
 
   const hasCode = Boolean(code)
   const hasTokenHash = Boolean(tokenHash)
-  console.log('Auth callback:', { hasCode, hasTokenHash, type })
+  console.log('Auth callback:', { hasCode, hasTokenHash, type: typeParam })
 
   if (!hasCode && !hasTokenHash) {
     console.error('Auth callback failed: missing code or token_hash/type')
@@ -18,18 +29,34 @@ export async function GET(request: Request) {
 
   try {
     const supabase = await createClient()
-    let response
 
     if (hasCode) {
-      response = await supabase.auth.exchangeCodeForSession(code as string)
-    } else {
-      response = await supabase.auth.verifyOtp({
-        token_hash: tokenHash as string,
-        type: type as 'signup' | 'magiclink' | 'sms' | 'email',
-      })
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code as string)
+
+      if (error || !data?.session) {
+        const errorMessage = error?.message ?? 'Unknown authentication error'
+        console.error('Auth callback failed:', errorMessage)
+        return redirect('/login?error=confirmation_failed')
+      }
+
+      return redirect('/auth/confirmed')
     }
 
-    const { data, error } = response
+    if (!tokenHash || !typeParam) {
+      console.error('Auth callback failed: missing token_hash or type for verifyOtp')
+      return redirect('/login?error=confirmation_failed')
+    }
+
+    if (!allowedEmailOtpTypes.includes(typeParam as EmailOtpType)) {
+      console.error('Auth callback failed: unsupported email OTP type', typeParam)
+      return redirect('/login?error=confirmation_failed')
+    }
+
+    const typeValue = typeParam as EmailOtpType
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: typeValue,
+    })
 
     if (error || !data?.session) {
       const errorMessage = error?.message ?? 'Unknown authentication error'
